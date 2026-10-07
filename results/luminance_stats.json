@@ -1,0 +1,26 @@
+{
+ "/tmp/ppe/images/train": {
+  "n": 1132,
+  "median": 132.7018585205078,
+  "q1": 100.74636650085449,
+  "q3": 157.5245018005371
+ },
+ "/kaggle/working/ppe_night_train": {
+  "n": 1132,
+  "median": 49.70952606201172,
+  "q1": 35.79606342315674,
+  "q3": 66.39253997802734
+ },
+ "/kaggle/input/datasets/amr21006/sfchd-daynight-test/sfchd_day/images": {
+  "n": 447,
+  "median": 116.56331634521484,
+  "q1": 107.60559844970703,
+  "q3": 127.69721984863281
+ },
+ "/kaggle/input/datasets/amr21006/sfchd-daynight-test/sfchd_night/images": {
+  "n": 447,
+  "median": 91.87105560302734,
+  "q1": 86.12887954711914,
+  "q3": 117.0594367980957
+ }
+}

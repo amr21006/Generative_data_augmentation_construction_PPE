@@ -1,0 +1,19 @@
+test_set,detector,P_mean,R_mean,F1_mean,mAP50_mean,mAP50_95_mean,P_sd,R_sd,F1_sd,mAP50_sd,mAP50_95_sd
+ppe_test,Baseline Model,0.6005,0.5060,0.5489,0.5244,0.2630,0.0155,0.0183,0.0065,0.0059,0.0033
+ppe_test,Size-matched control,0.5822,0.5221,0.5501,0.5185,0.2583,0.0124,0.0249,0.0097,0.0128,0.0035
+ppe_test,"Enhanced Model, urban CycleGAN",0.6460,0.5260,0.5788,0.5294,0.2623,0.0547,0.0104,0.0168,0.0034,0.0009
+ppe_test,"Change, control vs Baseline",-3.0%,+3.2%,+0.2%,-1.1%,-1.8%,,,,,
+ppe_test,"Change, urban Enhanced vs Baseline",+7.6%,+3.9%,+5.4%,+1.0%,-0.2%,,,,,
+ppe_test,"Change, urban Enhanced vs control",+11.0%,+0.7%,+5.2%,+2.1%,+1.6%,,,,,
+sfchd_day,Baseline Model,0.2878,0.1686,0.2075,0.1226,0.0271,0.0833,0.0176,0.0102,0.0240,0.0047
+sfchd_day,Size-matched control,0.2820,0.1582,0.1958,0.1106,0.0237,0.0858,0.0300,0.0160,0.0095,0.0035
+sfchd_day,"Enhanced Model, urban CycleGAN",0.3139,0.1512,0.2031,0.1260,0.0291,0.0389,0.0139,0.0129,0.0082,0.0048
+sfchd_day,"Change, control vs Baseline",-2.0%,-6.2%,-5.7%,-9.8%,-12.3%,,,,,
+sfchd_day,"Change, urban Enhanced vs Baseline",+9.1%,-10.4%,-2.1%,+2.7%,+7.7%,,,,,
+sfchd_day,"Change, urban Enhanced vs control",+11.3%,-4.5%,+3.8%,+13.9%,+22.9%,,,,,
+sfchd_night,Baseline Model,0.3393,0.1676,0.2221,0.1392,0.0317,0.0816,0.0155,0.0224,0.0180,0.0020
+sfchd_night,Size-matched control,0.3094,0.1477,0.1998,0.0986,0.0214,0.0368,0.0213,0.0263,0.0132,0.0029
+sfchd_night,"Enhanced Model, urban CycleGAN",0.3091,0.1455,0.1958,0.1111,0.0264,0.0505,0.0206,0.0152,0.0126,0.0050
+sfchd_night,"Change, control vs Baseline",-8.8%,-11.8%,-10.0%,-29.1%,-32.6%,,,,,
+sfchd_night,"Change, urban Enhanced vs Baseline",-8.9%,-13.1%,-11.8%,-20.1%,-16.9%,,,,,
+sfchd_night,"Change, urban Enhanced vs control",-0.1%,-1.5%,-2.0%,+12.7%,+23.3%,,,,,

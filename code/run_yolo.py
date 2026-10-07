@@ -1,4 +1,4 @@
-"""Controlled YOLOv8s experiment: Baseline vs Enhanced (CycleGAN night) vs Size-matched control.
+"""Controlled YOLOv8s experiment (update-matched option: --epochs, --warmup_epochs, --close_mosaic): Baseline vs Enhanced (CycleGAN night) vs Size-matched control.
 
 Arms (same Construction-PPE val split for checkpoint selection, same hyperparameters):
   baseline  : Construction-PPE training images (n = 1,132)
@@ -33,7 +33,7 @@ def link(src, dst):
         shutil.copy2(src, dst)
 
 
-def prepare(data, synth, work, arm):
+def prepare(data, synth, work, arm, share=1.0, share_seed=2026):
     """Build the training list for one arm (each image a distinct file with its own label file)."""
     data, work = Path(data), Path(work)
     work.mkdir(parents=True, exist_ok=True)
@@ -45,7 +45,11 @@ def prepare(data, synth, work, arm):
         (work / f'{tag}/images').mkdir(parents=True, exist_ok=True)
         (work / f'{tag}/labels').mkdir(parents=True, exist_ok=True)
         missing = []
-        for p in imgs:
+        chosen = imgs
+        if share < 1.0:   # fixed random subset (seed 2026): same source images for translations and duplicates
+            import random
+            chosen = sorted(random.Random(share_seed).sample(imgs, round(len(imgs) * share)))
+        for p in chosen:
             lab = data / 'labels/train' / (p.stem + '.txt')
             if tag == 'night':
                 s = Path(synth) / (p.stem + '_n2.jpg')
@@ -70,12 +74,12 @@ def prepare(data, synth, work, arm):
     return work / f'{arm}.yaml'
 
 
-def test_yamls(data, sfchd_root, work, tag, extra=()):
-    data, sfchd_root, work = Path(data), Path(sfchd_root), Path(work)
+def test_yamls(data, sfchd_root, work, tag, extra=(), only_extra=False):
+    data, work = Path(data), Path(work)
     out = {}
-    sets = [('ppe_test', data / 'images/test'),
-            ('sfchd_day', sfchd_root / 'sfchd_day/images'),
-            ('sfchd_night', sfchd_root / 'sfchd_night/images')]
+    sets = [] if only_extra else [('ppe_test', data / 'images/test'),
+                                  ('sfchd_day', Path(sfchd_root) / 'sfchd_day/images'),
+                                  ('sfchd_night', Path(sfchd_root) / 'sfchd_night/images')]
     for e in extra:   # additional test sets 'name=folder' (folder has images/ and labels/ in Construction-PPE ids)
         n, _, p = e.partition('=')
         sets.append((n, Path(p) / 'images'))
@@ -111,7 +115,9 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--data', required=True, help='Construction-PPE root (images/, labels/)')
     ap.add_argument('--synth', default='', help='folder of CycleGAN night translations (*_n2.jpg)')
-    ap.add_argument('--sfchd', required=True, help='folder containing sfchd_day/ and sfchd_night/')
+    ap.add_argument('--sfchd', default='', help='folder containing sfchd_day/ and sfchd_night/')
+    ap.add_argument('--only_extra', action='store_true', help='evaluate only on the --extra sets (validation only, no test sets)')
+    ap.add_argument('--synth_share', type=float, default=1.0, help='share of images added (translated or duplicated)')
     ap.add_argument('--out', default='.')
     ap.add_argument('--work', default=None)
     ap.add_argument('--arms', default='baseline,enhanced,sizematch')
@@ -120,6 +126,8 @@ def main():
     ap.add_argument('--workers', type=int, default=4)
     ap.add_argument('--amp', type=int, default=1)
     ap.add_argument('--epochs', type=int, default=HYP['epochs'])
+    ap.add_argument('--warmup_epochs', type=float, default=HYP['warmup_epochs'])
+    ap.add_argument('--close_mosaic', type=int, default=10, help='Ultralytics default; last N epochs without mosaic')
     ap.add_argument('--fraction', type=float, default=1.0)
     ap.add_argument('--tag', default='')
     ap.add_argument('--device', default='0')
@@ -131,7 +139,7 @@ def main():
     work = Path(a.work) if a.work else out / 'yolo_data'
     if a.prepare_only:
         for arm in a.arms.split(','):
-            prepare(a.data, a.synth, work, arm)
+            prepare(a.data, a.synth, work, arm, a.synth_share)
         return
     from ultralytics import YOLO
     res_dir = out / 'results'
@@ -144,10 +152,10 @@ def main():
                 print('skip', name, flush=True)
                 continue
             t0 = time.time()
-            data_yaml = prepare(a.data, a.synth, work, arm)
-            tests = test_yamls(a.data, a.sfchd, work, name, a.extra)
+            data_yaml = prepare(a.data, a.synth, work, arm, a.synth_share)
+            tests = test_yamls(a.data, a.sfchd, work, name, a.extra, a.only_extra)
             model = YOLO('yolov8s.pt')
-            hyp = dict(HYP, epochs=a.epochs)
+            hyp = dict(HYP, epochs=a.epochs, warmup_epochs=a.warmup_epochs, close_mosaic=a.close_mosaic)
             model.train(data=str(data_yaml), batch=a.batch, workers=a.workers,
                         seed=seed, amp=bool(a.amp), project=str(out / 'yolo_runs'), name=name, device=a.device,
                         cache=(a.cache if a.cache != 'none' else False),
@@ -162,7 +170,9 @@ def main():
                           project=str(out / 'yolo_runs' / name), name=f'val_{tname}', exist_ok=True)
                 ev[tname] = metrics_dict(r)
             ev.update(train_minutes=train_min, total_minutes=(time.time() - t0) / 60, arm=arm, seed=seed,
-                      batch=a.batch, amp=bool(a.amp), epochs=a.epochs, env=env_info())
+                      batch=a.batch, amp=bool(a.amp), epochs=a.epochs, warmup_epochs=a.warmup_epochs,
+                      close_mosaic=a.close_mosaic, synth_share=a.synth_share, synth=a.synth, only_extra=a.only_extra,
+                      env=env_info())
             out_json.write_text(json.dumps(ev, indent=1))
             print(name, json.dumps({k: {kk: round(vv, 4) for kk, vv in v.items() if kk in ('mAP50', 'mAP50_95', 'P', 'R')}
                                     for k, v in ev.items() if isinstance(v, dict) and 'mAP50' in v}), flush=True)

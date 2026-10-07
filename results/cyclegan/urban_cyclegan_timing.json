@@ -1,0 +1,9 @@
+{
+ "n_translated": 1132,
+ "crop": 256,
+ "job_hours": 1.527164419028494,
+ "train_hours": 1.4662874601284663,
+ "stopped_epoch": 50,
+ "best_epoch": 49,
+ "translate_minutes": 2.4
+}
